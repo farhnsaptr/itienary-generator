@@ -49,7 +49,19 @@ Dokumen ini berisi preferensi dan aturan coding yang harus diikuti oleh siapa pu
   - ✅ Ada penambahan fitur baru → README **wajib** diupdate (deskripsi fitur, struktur baru jika ada, dsb).
   - ❌ Hanya fix bug/patch kecil → README **tidak perlu** diupdate.
 
-## 5. Tidak Boleh Hardcode — Data Harus Dinamis dan Bersumber
+## 5. Mobile-First Development
+
+- Setiap komponen/halaman **wajib didesain dan dikembangkan untuk tampilan mobile terlebih dahulu**, baru kemudian disesuaikan/di-extend untuk tablet dan desktop.
+- Urutan kerja saat membangun UI:
+  1. Buat/uji layout dalam viewport mobile (± 375px) sampai benar-benar rapi dan fungsional.
+  2. Setelah versi mobile selesai, tambahkan breakpoint yang lebih besar (`sm:`, `md:`, `lg:`, dst di Tailwind) untuk menyesuaikan tampilan di layar lebih lebar.
+  3. Jangan membangun versi desktop dulu lalu "mengecilkan" lewat media query — ini sering menghasilkan elemen yang terpotong, teks kepanjangan, atau tombol yang sulit di-tap di layar kecil.
+- Elemen interaktif (tombol, input, item list, navigasi) harus punya target sentuh yang cukup besar untuk mobile (minimal ~44x44px area tap), bukan disesuaikan belakangan.
+- Komponen reusable (lihat bagian 3) harus divalidasi dulu tampilannya di ukuran mobile sebelum dipakai berulang di berbagai halaman.
+- Fitur yang secara alami berat di layar kecil (misal timeline, tabel data, modal kompleks) harus punya rencana adaptasi mobile yang jelas sejak awal desain — bukan ditambal belakangan setelah versi desktop jadi.
+- Testing manual/responsif wajib dicek minimal di breakpoint mobile sebelum sebuah fitur dianggap selesai, meskipun target akhir pengguna juga mengakses lewat desktop.
+
+## 6. Tidak Boleh Hardcode — Data Harus Dinamis dan Bersumber
 
 - Dilarang menulis nilai statis (hardcoded) untuk data yang seharusnya berasal dari sumber data (API, database, config, environment variable, dsb).
 - Termasuk yang tidak boleh di-hardcode:
@@ -67,6 +79,7 @@ Dokumen ini berisi preferensi dan aturan coding yang harus diikuti oleh siapa pu
 | Struktur modular per fitur | ✅ |
 | Pisah UI dan logic (RN) | ✅ |
 | Komponen reusable sebelum halaman statis | ✅ |
+| Develop tampilan mobile terlebih dahulu (mobile-first) | ✅ |
 | README.md di setiap folder/app | ✅ |
 | Update README saat fitur baru | ✅ |
 | Update README saat fix bug | ❌ |
