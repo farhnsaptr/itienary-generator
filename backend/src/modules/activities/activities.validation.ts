@@ -9,8 +9,8 @@ export const createActivitySchema = z.object({
   }),
   body: z
     .object({
-      title: z.string().min(1, "Judul kegiatan wajib diisi").max(150, "Judul maksimal 150 karakter"),
-      description: z.string().optional(),
+      title: z.string().min(1, "Judul kegiatan wajib diisi").max(20, "Judul maksimal 20 karakter"),
+      description: z.string().max(25, "Deskripsi maksimal 25 karakter").optional(),
       location: z.string().max(255).optional(),
       activity_date: z.string().regex(dateRegex, "Format activity_date harus YYYY-MM-DD"),
       start_time: z.string().regex(timeRegex, "Format start_time harus HH:mm atau HH:mm:ss"),
@@ -19,8 +19,8 @@ export const createActivitySchema = z.object({
       color: z.string().max(20).default("#f97316"),
       sort_order: z.number().int().default(0),
     })
-    .refine((data) => data.end_time > data.start_time, {
-      message: "Jam selesai (end_time) harus lebih besar dari jam mulai (start_time)",
+    .refine((data) => data.end_time !== data.start_time, {
+      message: "Jam selesai (end_time) tidak boleh sama dengan jam mulai (start_time)",
       path: ["end_time"],
     }),
 });
@@ -30,8 +30,8 @@ export const updateActivitySchema = z.object({
     id: z.string().uuid("ID Activity harus UUID valid"),
   }),
   body: z.object({
-    title: z.string().min(1).max(150).optional(),
-    description: z.string().optional(),
+    title: z.string().min(1).max(20).optional(),
+    description: z.string().max(25).optional(),
     location: z.string().max(255).optional(),
     activity_date: z.string().regex(dateRegex).optional(),
     start_time: z.string().regex(timeRegex).optional(),

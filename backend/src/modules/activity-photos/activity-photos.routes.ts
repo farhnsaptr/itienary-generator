@@ -68,6 +68,10 @@ activityPhotosRouter.post(
 );
 
 export const directPhotosRouter = Router();
+
+// Public Proxy Endpoint for Image Download & Canvas rendering
+directPhotosRouter.get("/proxy", asyncHandler(ActivityPhotosController.proxyDownload));
+
 directPhotosRouter.use(authGuard);
 
 /**

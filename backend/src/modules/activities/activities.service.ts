@@ -6,8 +6,8 @@ import { CustomError } from "../../middlewares/errorHandler";
 
 export class ActivitiesService {
   static async getTripActivities(tripId: string, userId: string, filterDate?: string) {
-    const role = await TripsService.getUserTripRole(tripId, userId);
-    if (!role) {
+    const permissions = await TripsService.getUserTripPermissions(tripId, userId);
+    if (!permissions) {
       const err: CustomError = new Error("Anda tidak memiliki akses ke trip ini");
       err.statusCode = 403;
       throw err;
@@ -15,7 +15,7 @@ export class ActivitiesService {
 
     let query = supabase
       .from("activities")
-      .select("*, activity_photos(id, photo_url, r2_key, caption)")
+      .select("*, activity_photos(id, photo_url, r2_key, caption, uploaded_by, created_at)")
       .eq("trip_id", tripId)
       .order("activity_date", { ascending: true })
       .order("start_time", { ascending: true })
@@ -37,14 +37,19 @@ export class ActivitiesService {
   }
 
   static async createActivity(tripId: string, userId: string, input: CreateActivityInput) {
-    const role = await TripsService.getUserTripRole(tripId, userId);
-    if (!role) {
+    const permissions = await TripsService.getUserTripPermissions(tripId, userId);
+    if (!permissions) {
       const err: CustomError = new Error("Anda tidak memiliki akses ke trip ini");
       err.statusCode = 403;
       throw err;
     }
 
-    // Verify trip date range constraint
+    if (!permissions.can_manage_activities) {
+      const err: CustomError = new Error("Anda hanya memiliki izin melihat kegiatan (tidak dapat menambah kegiatan)");
+      err.statusCode = 403;
+      throw err;
+    }
+
     const { data: trip } = await supabase
       .from("trips")
       .select("start_date, end_date")
@@ -84,7 +89,7 @@ export class ActivitiesService {
         sort_order: input.sort_order ?? 0,
         created_by: userId,
       })
-      .select()
+      .select("*, activity_photos(*)")
       .single();
 
     if (error || !newActivity) {
@@ -99,7 +104,7 @@ export class ActivitiesService {
   static async getActivityById(activityId: string, userId: string) {
     const { data: activity, error } = await supabase
       .from("activities")
-      .select("*, activity_photos(id, photo_url, r2_key, caption)")
+      .select("*, activity_photos(id, photo_url, r2_key, caption, uploaded_by, created_at)")
       .eq("id", activityId)
       .single();
 
@@ -109,8 +114,8 @@ export class ActivitiesService {
       throw err;
     }
 
-    const role = await TripsService.getUserTripRole(activity.trip_id, userId);
-    if (!role) {
+    const permissions = await TripsService.getUserTripPermissions(activity.trip_id, userId);
+    if (!permissions) {
       const err: CustomError = new Error("Anda tidak memiliki akses ke kegiatan ini");
       err.statusCode = 403;
       throw err;
@@ -132,23 +137,21 @@ export class ActivitiesService {
       throw err;
     }
 
-    const role = await TripsService.getUserTripRole(existingActivity.trip_id, userId);
-    if (!role) {
-      const err: CustomError = new Error("Anda tidak memiliki akses untuk mengubah kegiatan ini");
+    const permissions = await TripsService.getUserTripPermissions(existingActivity.trip_id, userId);
+    if (!permissions || !permissions.can_manage_activities) {
+      const err: CustomError = new Error("Anda tidak memiliki izin untuk mengubah kegiatan ini");
       err.statusCode = 403;
       throw err;
     }
 
-    // Validate times if updated
     const startTime = input.start_time || existingActivity.start_time;
     const endTime = input.end_time || existingActivity.end_time;
-    if (endTime <= startTime) {
-      const err: CustomError = new Error("Jam selesai (end_time) harus lebih besar dari jam mulai (start_time)");
+    if (endTime === startTime) {
+      const err: CustomError = new Error("Jam selesai (end_time) tidak boleh sama dengan jam mulai (start_time)");
       err.statusCode = 400;
       throw err;
     }
 
-    // Validate activity_date if updated
     if (input.activity_date) {
       const { data: trip } = await supabase
         .from("trips")
@@ -175,7 +178,7 @@ export class ActivitiesService {
       .from("activities")
       .update(input)
       .eq("id", activityId)
-      .select()
+      .select("*, activity_photos(*)")
       .single();
 
     if (error || !updatedActivity) {
@@ -200,14 +203,13 @@ export class ActivitiesService {
       throw err;
     }
 
-    const role = await TripsService.getUserTripRole(existingActivity.trip_id, userId);
-    if (!role) {
-      const err: CustomError = new Error("Anda tidak memiliki akses untuk menghapus kegiatan ini");
+    const permissions = await TripsService.getUserTripPermissions(existingActivity.trip_id, userId);
+    if (!permissions || !permissions.can_manage_activities) {
+      const err: CustomError = new Error("Anda tidak memiliki izin untuk menghapus kegiatan ini");
       err.statusCode = 403;
       throw err;
     }
 
-    // Clean up activity photos from R2
     const { data: photos } = await supabase
       .from("activity_photos")
       .select("r2_key")

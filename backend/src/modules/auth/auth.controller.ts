@@ -35,19 +35,10 @@ function clearAuthCookies(res: Response) {
 }
 
 export class AuthController {
-  static async register(req: Request, res: Response) {
-    const userAgent = req.headers["user-agent"];
-    const result = await AuthService.register(req.body, userAgent);
-
-    setAuthCookies(res, result.accessToken, result.refreshToken);
-
-    return res.status(201).json({
-      success: true,
-      message: "Registrasi berhasil",
-      data: {
-        user: result.user,
-        accessToken: result.accessToken,
-      },
+  static async register(_req: Request, res: Response) {
+    return res.status(403).json({
+      success: false,
+      message: "Pendaftaran mandiri tidak diizinkan. Pengguna hanya dapat dibuat oleh Admin.",
     });
   }
 

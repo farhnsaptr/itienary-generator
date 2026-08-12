@@ -6,6 +6,7 @@ import { tripMembersRoutes } from "../modules/trip-members";
 import { tripActivitiesRouter, activitiesRouter } from "../modules/activities";
 import { activityPhotosRouter, directPhotosRouter } from "../modules/activity-photos";
 import { adminRoutes } from "../modules/admin";
+import notificationsRoutes from "../modules/notifications";
 
 const router = Router();
 
@@ -14,6 +15,9 @@ router.use("/auth", authRoutes);
 
 // User management routes
 router.use("/users", usersRoutes);
+
+// Notifications routes
+router.use("/notifications", notificationsRoutes);
 
 // Trip routes & nested members/activities
 router.use("/trips", tripsRoutes);

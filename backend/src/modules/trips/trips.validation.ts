@@ -5,8 +5,8 @@ const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
 export const createTripSchema = z.object({
   body: z
     .object({
-      name: z.string().min(1, "Nama trip wajib diisi").max(150, "Nama trip maksimal 150 karakter"),
-      description: z.string().optional(),
+      name: z.string().min(1, "Nama trip wajib diisi").max(20, "Nama trip maksimal 20 karakter"),
+      description: z.string().max(25, "Deskripsi maksimal 25 karakter").optional(),
       start_date: z.string().regex(dateRegex, "Format start_date harus YYYY-MM-DD"),
       end_date: z.string().regex(dateRegex, "Format end_date harus YYYY-MM-DD"),
       theme_color: z.string().max(20).optional(),
@@ -23,8 +23,8 @@ export const updateTripSchema = z.object({
     id: z.string().uuid("ID Trip harus UUID valid"),
   }),
   body: z.object({
-    name: z.string().min(1).max(150).optional(),
-    description: z.string().optional(),
+    name: z.string().min(1).max(20).optional(),
+    description: z.string().max(25).optional(),
     start_date: z.string().regex(dateRegex).optional(),
     end_date: z.string().regex(dateRegex).optional(),
     theme_color: z.string().max(20).optional(),

@@ -18,11 +18,36 @@ export class TripsService {
     return member ? (member.role as "owner" | "member") : null;
   }
 
+  /**
+   * Helper to fetch detailed trip permissions for user
+   */
+  static async getUserTripPermissions(tripId: string, userId: string) {
+    const { data: member } = await supabase
+      .from("trip_members")
+      .select("role, status, can_manage_activities, can_manage_photos")
+      .eq("trip_id", tripId)
+      .eq("user_id", userId)
+      .maybeSingle();
+
+    if (!member) {
+      return null;
+    }
+
+    const isOwner = member.role === "owner";
+    return {
+      role: member.role as "owner" | "member",
+      status: member.status || "accepted",
+      can_manage_activities: isOwner || member.can_manage_activities || false,
+      can_manage_photos: isOwner || member.can_manage_photos || false,
+    };
+  }
+
   static async getUserTrips(userId: string) {
     const { data: members, error: memberError } = await supabase
       .from("trip_members")
-      .select("trip_id, role")
-      .eq("user_id", userId);
+      .select("trip_id, role, can_manage_activities, can_manage_photos, status")
+      .eq("user_id", userId)
+      .eq("status", "accepted");
 
     if (memberError) {
       const err: CustomError = new Error("Gagal mengambil data trip: " + memberError.message);
@@ -35,7 +60,7 @@ export class TripsService {
     }
 
     const tripIds = members.map((m) => m.trip_id);
-    const roleMap = new Map(members.map((m) => [m.trip_id, m.role]));
+    const memberMap = new Map(members.map((m) => [m.trip_id, m]));
 
     const { data: trips, error: tripsError } = await supabase
       .from("trips")
@@ -49,10 +74,16 @@ export class TripsService {
       throw err;
     }
 
-    return (trips as Trip[]).map((trip) => ({
-      ...trip,
-      my_role: roleMap.get(trip.id),
-    }));
+    return (trips as Trip[]).map((trip) => {
+      const m = memberMap.get(trip.id);
+      const isOwner = m?.role === "owner";
+      return {
+        ...trip,
+        my_role: m?.role,
+        can_manage_activities: isOwner || m?.can_manage_activities || false,
+        can_manage_photos: isOwner || m?.can_manage_photos || false,
+      };
+    });
   }
 
   static async createTrip(
@@ -64,7 +95,7 @@ export class TripsService {
     let cover_image_key = input.cover_image_key || null;
 
     if (coverFile) {
-      const uploadRes = await uploadToR2(coverFile.buffer, coverFile.mimetype, "trip-covers");
+      const uploadRes = await uploadToR2(coverFile.buffer, coverFile.mimetype, "uploads/trip-covers");
       cover_image_url = uploadRes.url;
       cover_image_key = uploadRes.key;
     }
@@ -90,11 +121,14 @@ export class TripsService {
       throw err;
     }
 
-    // Add user as owner in trip_members
+    // Add user as owner in trip_members with full permissions
     const { error: memberError } = await supabase.from("trip_members").insert({
       trip_id: newTrip.id,
       user_id: userId,
       role: "owner",
+      status: "accepted",
+      can_manage_activities: true,
+      can_manage_photos: true,
     });
 
     if (memberError) {
@@ -106,12 +140,14 @@ export class TripsService {
     return {
       ...newTrip,
       my_role: "owner",
+      can_manage_activities: true,
+      can_manage_photos: true,
     };
   }
 
   static async getTripById(tripId: string, userId: string) {
-    const role = await this.getUserTripRole(tripId, userId);
-    if (!role) {
+    const permissions = await this.getUserTripPermissions(tripId, userId);
+    if (!permissions) {
       const err: CustomError = new Error("Anda tidak memiliki akses ke trip ini");
       err.statusCode = 403;
       throw err;
@@ -131,7 +167,9 @@ export class TripsService {
 
     return {
       ...trip,
-      my_role: role,
+      my_role: permissions.role,
+      can_manage_activities: permissions.can_manage_activities,
+      can_manage_photos: permissions.can_manage_photos,
     };
   }
 
@@ -165,7 +203,7 @@ export class TripsService {
       if (existingTrip?.cover_image_key) {
         await deleteFromR2(existingTrip.cover_image_key);
       }
-      const uploadRes = await uploadToR2(coverFile.buffer, coverFile.mimetype, "trip-covers");
+      const uploadRes = await uploadToR2(coverFile.buffer, coverFile.mimetype, "uploads/trip-covers");
       updates.cover_image_url = uploadRes.url;
       updates.cover_image_key = uploadRes.key;
     }
@@ -186,6 +224,8 @@ export class TripsService {
     return {
       ...updatedTrip,
       my_role: "owner",
+      can_manage_activities: true,
+      can_manage_photos: true,
     };
   }
 
@@ -197,7 +237,6 @@ export class TripsService {
       throw err;
     }
 
-    // Get trip cover and activity photos for R2 cleanup
     const { data: trip } = await supabase
       .from("trips")
       .select("cover_image_key")
@@ -208,7 +247,6 @@ export class TripsService {
       await deleteFromR2(trip.cover_image_key);
     }
 
-    // Find all activity photos in this trip
     const { data: activities } = await supabase
       .from("activities")
       .select("id")

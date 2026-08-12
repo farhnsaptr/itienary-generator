@@ -27,7 +27,7 @@ app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 app.get("/api/health", (_req, res) => {
   res.status(200).json({
     success: true,
-    message: "Itinerary Generator API is operational 🚀",
+    message: "Itinerary Generator API is operational",
     timestamp: new Date().toISOString(),
   });
 });

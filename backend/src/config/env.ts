@@ -23,12 +23,16 @@ const envSchema = z.object({
   R2_PUBLIC_URL: z.string().url("R2_PUBLIC_URL must be a valid URL"),
 
   CLIENT_URL: z.string().url("CLIENT_URL must be a valid URL").default("http://localhost:5173"),
+
+  ADMIN_USERNAME: z.string().default("admin"),
+  ADMIN_EMAIL: z.string().email().default("admin@example.com"),
+  ADMIN_PASSWORD: z.string().min(6).default("AdminPassword123!"),
 });
 
 const parseEnv = () => {
   const result = envSchema.safeParse(process.env);
   if (!result.success) {
-    console.error("❌ Invalid environment variables:", result.error.format());
+    console.error("[ERROR] Invalid environment variables:", result.error.format());
     throw new Error("Invalid environment variables");
   }
   return result.data;

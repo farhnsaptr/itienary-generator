@@ -72,6 +72,12 @@ Dokumen ini berisi preferensi dan aturan coding yang harus diikuti oleh siapa pu
 - Yang **masih boleh** dianggap konstanta (bukan kategori "hardcode" di atas): nilai teknis yang memang tetap secara definisi (misal ukuran padding UI, breakpoint layout, warna tema) — ini boleh disimpan di file constants/theme, bukan berarti harus dari API.
 - Jika data belum tersedia dari backend, buat dulu service/hook dengan interface yang jelas (bisa pakai mock sementara), agar saat data asli tersedia tinggal diganti sumbernya tanpa mengubah struktur kode di komponen.
 
+## 7. Larangan Penggunaan Emoji Default
+
+- **Dilarang menggunakan emoji default Unicode** (seperti 🚀, ✨, ✈️, 🏖️, 👋, 🗺️, 🧪, ✅, ❌, dll) di dalam kode frontend, backend, maupun UI antarmuka.
+- Untuk elemen visual / ikon pada UI frontend, **selalu gunakan ikon SVG / Lucide Icons** (`lucide-react`) atau penataan gaya tipografi yang bersih.
+- Untuk log/output terminal dan dokumentasi, gunakan teks polos atau simbol terstandar tanpa emoji default.
+
 ## Ringkasan Cepat
 
 | Aturan | Wajib? |
@@ -85,3 +91,5 @@ Dokumen ini berisi preferensi dan aturan coding yang harus diikuti oleh siapa pu
 | Update README saat fix bug | ❌ |
 | Data bisnis/konfigurasi hardcode langsung di kode | ❌ |
 | Data diambil dinamis dari API/DB/config | ✅ |
+| Dilarang menggunakan emoji default Unicode | ✅ |
+

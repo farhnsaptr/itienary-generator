@@ -18,8 +18,8 @@ export class ActivityPhotosService {
       throw err;
     }
 
-    const role = await TripsService.getUserTripRole(activity.trip_id, userId);
-    if (!role) {
+    const permissions = await TripsService.getUserTripPermissions(activity.trip_id, userId);
+    if (!permissions) {
       const err: CustomError = new Error("Anda tidak memiliki akses ke foto kegiatan ini");
       err.statusCode = 403;
       throw err;
@@ -59,14 +59,22 @@ export class ActivityPhotosService {
       throw err;
     }
 
-    const role = await TripsService.getUserTripRole(activity.trip_id, userId);
-    if (!role) {
+    const permissions = await TripsService.getUserTripPermissions(activity.trip_id, userId);
+    if (!permissions) {
       const err: CustomError = new Error("Anda tidak memiliki akses ke kegiatan ini");
       err.statusCode = 403;
       throw err;
     }
 
-    const { url, key } = await uploadToR2(fileBuffer, mimeType, "activity-photos");
+    if (!permissions.can_manage_photos) {
+      const err: CustomError = new Error("Anda hanya memiliki izin melihat foto (tidak dapat mengunggah foto)");
+      err.statusCode = 403;
+      throw err;
+    }
+
+    // Cloudflare R2 Folder structure: uploads/trips/<trip_id>/activities/<activity_id>/
+    const r2FolderPrefix = `uploads/trips/${activity.trip_id}/activities/${activityId}`;
+    const { url, key } = await uploadToR2(fileBuffer, mimeType, r2FolderPrefix);
 
     const { data: newPhoto, error } = await supabase
       .from("activity_photos")
@@ -110,9 +118,9 @@ export class ActivityPhotosService {
       .single();
 
     if (activity) {
-      const role = await TripsService.getUserTripRole(activity.trip_id, userId);
-      if (!role) {
-        const err: CustomError = new Error("Anda tidak memiliki akses untuk menghapus foto ini");
+      const permissions = await TripsService.getUserTripPermissions(activity.trip_id, userId);
+      if (!permissions || !permissions.can_manage_photos) {
+        const err: CustomError = new Error("Anda tidak memiliki izin untuk menghapus foto ini");
         err.statusCode = 403;
         throw err;
       }

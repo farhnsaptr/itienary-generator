@@ -20,6 +20,37 @@ export class AdminController {
     });
   }
 
+  static async getUserById(req: Request, res: Response) {
+    const userId = req.params.id as string;
+    const user = await AdminService.getUserById(userId);
+
+    return res.status(200).json({
+      success: true,
+      data: user,
+    });
+  }
+
+  static async createUser(req: Request, res: Response) {
+    const newUser = await AdminService.createUser(req.body);
+
+    return res.status(201).json({
+      success: true,
+      message: "Pengguna baru berhasil dibuat",
+      data: newUser,
+    });
+  }
+
+  static async updateUser(req: Request, res: Response) {
+    const userId = req.params.id as string;
+    const updatedUser = await AdminService.updateUser(userId, req.body);
+
+    return res.status(200).json({
+      success: true,
+      message: "Data pengguna berhasil diperbarui",
+      data: updatedUser,
+    });
+  }
+
   static async updateUserStatus(req: Request, res: Response) {
     const targetUserId = req.params.id as string;
     const updatedUser = await AdminService.updateUserStatus(targetUserId, req.body);
@@ -28,6 +59,16 @@ export class AdminController {
       success: true,
       message: "Status pengguna berhasil diperbarui",
       data: updatedUser,
+    });
+  }
+
+  static async deleteUser(req: Request, res: Response) {
+    const userId = req.params.id as string;
+    await AdminService.deleteUser(userId);
+
+    return res.status(200).json({
+      success: true,
+      message: "Pengguna berhasil dihapus",
     });
   }
 
