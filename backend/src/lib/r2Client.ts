@@ -34,13 +34,8 @@ export async function uploadToR2(
 
   await r2Client.send(command);
 
-  // Construct public URL
-  const publicBaseUrl = env.R2_PUBLIC_URL.endsWith("/")
-    ? env.R2_PUBLIC_URL.slice(0, -1)
-    : env.R2_PUBLIC_URL;
-  const url = `${publicBaseUrl}/${key}`;
-
-  return { url, key };
+  // Return object key as stored identifier
+  return { url: key, key };
 }
 
 /**
