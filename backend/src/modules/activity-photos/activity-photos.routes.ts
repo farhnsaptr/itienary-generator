@@ -62,7 +62,7 @@ activityPhotosRouter.use(authGuard);
 activityPhotosRouter.get("/", asyncHandler(ActivityPhotosController.getPhotos));
 activityPhotosRouter.post(
   "/",
-  upload.single("photo"),
+  upload.any(),
   validate(uploadPhotoSchema),
   asyncHandler(ActivityPhotosController.uploadPhoto)
 );

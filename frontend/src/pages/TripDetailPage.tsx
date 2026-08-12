@@ -289,11 +289,11 @@ export function TripDetailPage() {
         onClose={() => setTargetPhotoActivity(null)}
         activityTitle={targetPhotoActivity?.title || ""}
         isUploading={uploadPhotoMutation.isPending}
-        onUpload={async (file, caption) => {
+        onUpload={async (files, caption) => {
           if (targetPhotoActivity) {
             await uploadPhotoMutation.mutateAsync({
               activityId: targetPhotoActivity.id,
-              file,
+              files,
               caption,
             });
           }

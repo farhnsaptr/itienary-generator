@@ -135,7 +135,13 @@ export function ActivityTimeline({
                     <button
                       type="button"
                       onClick={() => {
-                        if (confirm(`Apakah Anda yakin ingin menghapus kegiatan "${act.title}"?`)) {
+                        const photoCount = photos.length;
+                        const confirmMsg =
+                          photoCount > 0
+                            ? `Kegiatan "${act.title}" memiliki ${photoCount} foto. Menghapus kegiatan ini juga akan menghapus semua foto di dalamnya.\n\nApakah Anda yakin ingin menghapus?`
+                            : `Apakah Anda yakin ingin menghapus kegiatan "${act.title}"?`;
+
+                        if (confirm(confirmMsg)) {
                           onDeleteActivity(act.id);
                         }
                       }}
@@ -168,22 +174,42 @@ export function ActivityTimeline({
 
               {/* Photo Thumbnails & Upload Photo Action */}
               <div className="relative z-10 pt-3 border-t border-[var(--color-ink)]/10 flex flex-wrap items-center justify-between gap-2">
-                {/* Thumbnails */}
+                {/* Thumbnails (Max 3 preview photos + Remaining count badge) */}
                 <div className="flex items-center gap-2 overflow-x-auto py-1">
-                  {photos.map((photo, pIdx) => (
-                    <button
-                      key={photo.id}
-                      type="button"
-                      onClick={() => onOpenGallery?.(act, pIdx)}
-                      className="relative w-12 h-12 rounded-lg border-2 border-[var(--color-ink)] overflow-hidden shadow-xs hover:scale-105 transition-transform cursor-pointer group"
-                    >
-                      <img
-                        src={photo.photo_url}
-                        alt={photo.caption || act.title}
-                        className="w-full h-full object-cover"
-                      />
-                    </button>
-                  ))}
+                  {(() => {
+                    const previewPhotos = photos.slice(0, 3);
+                    const remainingCount = photos.length - 3;
+
+                    return (
+                      <>
+                        {previewPhotos.map((photo, pIdx) => (
+                          <button
+                            key={photo.id}
+                            type="button"
+                            onClick={() => onOpenGallery?.(act, pIdx)}
+                            className="relative w-12 h-12 rounded-lg border-2 border-[var(--color-ink)] overflow-hidden shadow-xs hover:scale-105 transition-transform cursor-pointer group"
+                          >
+                            <img
+                              src={photo.photo_url}
+                              alt={photo.caption || act.title}
+                              className="w-full h-full object-cover"
+                            />
+                          </button>
+                        ))}
+
+                        {remainingCount > 0 && (
+                          <button
+                            type="button"
+                            onClick={() => onOpenGallery?.(act, 3)}
+                            className="relative w-12 h-12 rounded-lg border-2 border-[var(--color-ink)] bg-[var(--color-pink)] text-[var(--color-ink)] font-bold text-xs flex items-center justify-center shadow-xs hover:scale-105 transition-transform cursor-pointer"
+                            title={`Lihat ${remainingCount} foto lagi`}
+                          >
+                            <span>+{remainingCount}</span>
+                          </button>
+                        )}
+                      </>
+                    );
+                  })()}
 
                   {photos.length === 0 && (
                     <span className="text-[11px] text-[var(--color-ink-soft)] italic">

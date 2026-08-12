@@ -98,6 +98,63 @@ export class ActivityPhotosService {
     return newPhoto as ActivityPhoto;
   }
 
+  static async uploadMultiplePhotos(
+    activityId: string,
+    userId: string,
+    files: { buffer: Buffer; mimetype: string }[],
+    caption?: string
+  ) {
+    const { data: activity } = await supabase
+      .from("activities")
+      .select("trip_id")
+      .eq("id", activityId)
+      .single();
+
+    if (!activity) {
+      const err: CustomError = new Error("Kegiatan tidak ditemukan");
+      err.statusCode = 404;
+      throw err;
+    }
+
+    const permissions = await TripsService.getUserTripPermissions(activity.trip_id, userId);
+    if (!permissions || !permissions.can_manage_photos) {
+      const err: CustomError = new Error("Anda tidak memiliki akses untuk mengunggah foto ke kegiatan ini");
+      err.statusCode = 403;
+      throw err;
+    }
+
+    const r2FolderPrefix = `uploads/trips/${activity.trip_id}/activities/${activityId}`;
+
+    // Upload all files to Cloudflare R2 in parallel
+    const uploadPromises = files.map((file) =>
+      uploadToR2(file.buffer, file.mimetype, r2FolderPrefix)
+    );
+    const r2Results = await Promise.all(uploadPromises);
+
+    // Prepare DB insert rows
+    const rowsToInsert = r2Results.map((r2) => ({
+      activity_id: activityId,
+      photo_url: r2.url,
+      r2_key: r2.key,
+      caption: caption || null,
+      uploaded_by: userId,
+    }));
+
+    const { data: newPhotos, error } = await supabase
+      .from("activity_photos")
+      .insert(rowsToInsert)
+      .select();
+
+    if (error || !newPhotos) {
+      await Promise.all(r2Results.map((r2) => deleteFromR2(r2.key)));
+      const err: CustomError = new Error("Gagal menyimpan foto kegiatan: " + error?.message);
+      err.statusCode = 500;
+      throw err;
+    }
+
+    return newPhotos as ActivityPhoto[];
+  }
+
   static async deletePhoto(photoId: string, userId: string) {
     const { data: photo } = await supabase
       .from("activity_photos")

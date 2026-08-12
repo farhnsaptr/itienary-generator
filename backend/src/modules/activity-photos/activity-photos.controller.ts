@@ -19,24 +19,34 @@ export class ActivityPhotosController {
     const userId = req.user!.userId;
     const activityId = req.params.activityId as string;
 
-    if (!req.file) {
+    const files: Express.Multer.File[] = [];
+    if (req.files && Array.isArray(req.files)) {
+      files.push(...req.files);
+    } else if (req.files && typeof req.files === "object") {
+      Object.values(req.files).forEach((fileArray) => {
+        if (Array.isArray(fileArray)) files.push(...fileArray);
+      });
+    } else if (req.file) {
+      files.push(req.file);
+    }
+
+    if (files.length === 0) {
       const err: CustomError = new Error("File foto tidak ditemukan");
       err.statusCode = 400;
       throw err;
     }
 
-    const photo = await ActivityPhotosService.uploadPhoto(
+    const photos = await ActivityPhotosService.uploadMultiplePhotos(
       activityId,
       userId,
-      req.file.buffer,
-      req.file.mimetype,
+      files,
       req.body.caption
     );
 
     return res.status(201).json({
       success: true,
-      message: "Foto berhasil diunggah",
-      data: photo,
+      message: `${photos.length} foto berhasil diunggah`,
+      data: photos,
     });
   }
 

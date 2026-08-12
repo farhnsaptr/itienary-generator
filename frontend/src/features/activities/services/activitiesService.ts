@@ -32,21 +32,22 @@ export const activitiesService = {
     await api.delete(`/activities/${activityId}`);
   },
 
-  uploadPhoto: async (activityId: string, file: File, caption?: string): Promise<ActivityPhotoItem> => {
+  uploadPhoto: async (activityId: string, files: File[] | File, caption?: string): Promise<ActivityPhotoItem[]> => {
     const formData = new FormData();
-    formData.append("photo", file);
-    if (caption) formData.append("caption", caption);
+    const fileList = Array.isArray(files) ? files : [files];
+    fileList.forEach((file) => {
+      formData.append("photos", file);
+    });
+    if (caption) {
+      formData.append("caption", caption);
+    }
 
-    const res = await api.post<{ success: boolean; data: ActivityPhotoItem }>(
-      `/activities/${activityId}/photos`,
-      formData,
-      {
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
-      }
-    );
-    return res.data.data;
+    const res = await api.post(`/activities/${activityId}/photos`, formData, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    });
+    return Array.isArray(res.data.data) ? res.data.data : [res.data.data];
   },
 
   deletePhoto: async (photoId: string): Promise<void> => {

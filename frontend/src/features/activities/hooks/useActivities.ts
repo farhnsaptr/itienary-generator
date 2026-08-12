@@ -50,8 +50,8 @@ export function useActivities(tripId: string, filterDate?: string) {
   });
 
   const uploadPhotoMutation = useMutation({
-    mutationFn: ({ activityId, file, caption }: { activityId: string; file: File; caption?: string }) =>
-      activitiesService.uploadPhoto(activityId, file, caption),
+    mutationFn: ({ activityId, files, caption }: { activityId: string; files: File[] | File; caption?: string }) =>
+      activitiesService.uploadPhoto(activityId, files, caption),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["activities", tripId] });
     },
