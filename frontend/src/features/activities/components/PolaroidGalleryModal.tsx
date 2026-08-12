@@ -8,7 +8,7 @@ import {
   DeleteIcon as Trash2,
   DownloadIcon as Download,
 } from "react-doodle-icons";
-import { downloadOriginalPhoto } from "../../../utils/downloadHelpers";
+import { downloadOriginalPhoto, getPhotoDisplayUrl } from "../../../utils/downloadHelpers";
 
 interface PolaroidGalleryModalProps {
   isOpen: boolean;
@@ -161,7 +161,7 @@ export function PolaroidGalleryModal({
             {/* Image Frame */}
             <div className="relative w-full h-[320px] sm:h-[400px] bg-gray-100 overflow-hidden rounded-xs border border-gray-300">
               <img
-                src={currentPhoto.photo_url}
+                src={getPhotoDisplayUrl(currentPhoto.photo_url)}
                 alt={currentPhoto.caption || activityTitle}
                 className="w-full h-full object-cover"
               />
@@ -196,7 +196,7 @@ export function PolaroidGalleryModal({
                       : "border-white/40 opacity-60 hover:opacity-100"
                   }`}
                 >
-                  <img src={photo.photo_url} alt="thumbnail" className="w-full h-full object-cover" />
+                  <img src={getPhotoDisplayUrl(photo.photo_url)} alt="thumbnail" className="w-full h-full object-cover" />
                 </button>
               ))}
             </div>

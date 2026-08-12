@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
 import { ActivityPhotosService } from "./activity-photos.service";
+import { getFromR2 } from "../../lib/r2Client";
 import { CustomError } from "../../middlewares/errorHandler";
 
 export class ActivityPhotosController {
@@ -64,23 +65,50 @@ export class ActivityPhotosController {
 
   static async proxyDownload(req: Request, res: Response) {
     const imageUrl = req.query.url as string;
+    const objectKey = req.query.key as string;
     const isDownload = req.query.download === "true";
     const filename = (req.query.filename as string) || "foto.jpg";
 
-    if (!imageUrl) {
-      res.status(400).json({ success: false, message: "URL gambar wajib diisi" });
+    if (!imageUrl && !objectKey) {
+      res.status(400).json({ success: false, message: "URL atau Key gambar wajib diisi" });
       return;
     }
 
+    // Extract R2 object key from URL if not explicitly provided
+    let key = objectKey;
+    if (!key && imageUrl) {
+      const match = imageUrl.match(/uploads\/.+/);
+      if (match) {
+        key = match[0];
+      }
+    }
+
     try {
-      const response = await fetch(imageUrl);
-      if (!response.ok) {
+      let buffer: Buffer | null = null;
+      let contentType = "image/jpeg";
+
+      // 1. Try reading directly from Cloudflare R2 via private S3 API first
+      if (key) {
+        const r2Data = await getFromR2(key);
+        if (r2Data) {
+          buffer = r2Data.buffer;
+          contentType = r2Data.contentType;
+        }
+      }
+
+      // 2. Fallback to HTTP fetch if S3 API read was unavailable
+      if (!buffer && imageUrl) {
+        const response = await fetch(imageUrl);
+        if (response.ok) {
+          contentType = response.headers.get("content-type") || "image/jpeg";
+          buffer = Buffer.from(await response.arrayBuffer());
+        }
+      }
+
+      if (!buffer) {
         res.status(404).json({ success: false, message: "Gambar tidak ditemukan" });
         return;
       }
-
-      const contentType = response.headers.get("content-type") || "image/jpeg";
-      const buffer = Buffer.from(await response.arrayBuffer());
 
       const origin = req.headers.origin;
       if (origin) {
@@ -90,7 +118,8 @@ export class ActivityPhotosController {
         res.setHeader("Access-Control-Allow-Origin", "*");
       }
       res.setHeader("Access-Control-Allow-Headers", "*");
-      res.setHeader("Access-Control-Allow-Methods", "GET, OPTIONS");
+      res.setHeader("Content-Type", contentType);
+      res.setHeader("Cache-Control", "public, max-age=86400, s-maxage=86400");
 
       if (isDownload) {
         res.setHeader("Content-Disposition", `attachment; filename="${encodeURIComponent(filename)}"`);

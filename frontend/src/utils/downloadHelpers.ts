@@ -14,6 +14,15 @@ export function getPhotoProxyUrl(imageUrl: string, download = false, filename?: 
 }
 
 /**
+ * Safely resolves an image display URL (routes R2 images through backend proxy to prevent SSL/HSTS errors)
+ */
+export function getPhotoDisplayUrl(imageUrl: string): string {
+  if (!imageUrl) return "";
+  if (imageUrl.startsWith("blob:") || imageUrl.startsWith("data:")) return imageUrl;
+  return getPhotoProxyUrl(imageUrl, false);
+}
+
+/**
  * Downloads a single file blob to client browser
  */
 export function triggerFileDownload(blob: Blob, fileName: string) {

@@ -1,4 +1,4 @@
-import { S3Client, PutObjectCommand, DeleteObjectCommand } from "@aws-sdk/client-s3";
+import { S3Client, PutObjectCommand, DeleteObjectCommand, GetObjectCommand } from "@aws-sdk/client-s3";
 import { env } from "../config/env";
 import crypto from "crypto";
 
@@ -41,6 +41,30 @@ export async function uploadToR2(
   const url = `${publicBaseUrl}/${key}`;
 
   return { url, key };
+}
+
+/**
+ * Retrieve object directly from Cloudflare R2 bucket via S3 API (private access).
+ */
+export async function getFromR2(key: string): Promise<{ buffer: Buffer; contentType: string } | null> {
+  try {
+    const command = new GetObjectCommand({
+      Bucket: env.R2_BUCKET_NAME,
+      Key: key,
+    });
+
+    const response = await r2Client.send(command);
+    if (!response.Body) return null;
+
+    const byteArray = await response.Body.transformToByteArray();
+    const buffer = Buffer.from(byteArray);
+    const contentType = response.ContentType || "image/jpeg";
+
+    return { buffer, contentType };
+  } catch (err) {
+    console.error("Error reading object from R2 via S3 API:", err);
+    return null;
+  }
 }
 
 /**

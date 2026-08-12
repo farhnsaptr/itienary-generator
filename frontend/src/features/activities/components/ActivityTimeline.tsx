@@ -1,6 +1,7 @@
 import { motion, AnimatePresence } from "framer-motion";
 import type { Activity } from "../types/activities.types";
 import { PencilBorder } from "../../../components/ui/PencilBorder";
+import { getPhotoDisplayUrl } from "../../../utils/downloadHelpers";
 import {
   ClockIcon as Clock,
   LocationPinIcon as MapPin,
@@ -199,7 +200,7 @@ export function ActivityTimeline({
                             className="relative w-12 h-12 rounded-lg border-2 border-[var(--color-ink)] overflow-hidden shadow-xs hover:scale-105 transition-transform cursor-pointer group"
                           >
                             <img
-                              src={photo.photo_url}
+                              src={getPhotoDisplayUrl(photo.photo_url)}
                               alt={photo.caption || act.title}
                               className="w-full h-full object-cover"
                             />
