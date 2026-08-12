@@ -6,11 +6,20 @@ export const corsOptions: CorsOptions = {
     // Allow requests with no origin (like mobile apps, curl, or Postman)
     if (!origin) return callback(null, true);
     
-    if (origin === env.CLIENT_URL || env.NODE_ENV === "development") {
+    const clientUrlClean = (env.CLIENT_URL || "").replace(/\/$/, "");
+    const originClean = origin.replace(/\/$/, "");
+
+    if (
+      originClean === clientUrlClean ||
+      env.NODE_ENV === "development" ||
+      originClean.startsWith("http://localhost:") ||
+      originClean.startsWith("http://127.0.0.1:") ||
+      originClean.startsWith("http://192.168.")
+    ) {
       return callback(null, true);
     }
-    
-    return callback(new Error("CORS Policy: Origin not allowed"));
+
+    return callback(new Error(`CORS Policy: Origin ${origin} not allowed`));
   },
   credentials: true,
   methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
