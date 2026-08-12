@@ -160,10 +160,19 @@ export function ActivityTimeline({
                   {act.title}
                 </h4>
                 {act.location && (
-                  <div className="flex items-center gap-1 text-xs font-semibold text-[var(--color-ink-soft)] mt-1">
-                    <MapPin className="w-3.5 h-3.5 text-[var(--color-ink)]" />
+                  <a
+                    href={
+                      act.location_url ||
+                      `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(act.location)}`
+                    }
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 text-xs font-semibold text-blue-700 hover:text-blue-900 hover:underline mt-1.5 bg-blue-50/80 px-2.5 py-1 rounded-lg border border-blue-200 transition-colors cursor-pointer group"
+                    title="Buka Lokasi di Google Maps"
+                  >
+                    <MapPin className="w-3.5 h-3.5 text-blue-600 group-hover:scale-110 transition-transform" />
                     <span>{act.location}</span>
-                  </div>
+                  </a>
                 )}
                 {act.description && (
                   <p className="text-xs text-[var(--color-ink-soft)] font-normal mt-2 leading-relaxed">

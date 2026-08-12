@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { PencilBorder } from "../../../components/ui/PencilBorder";
 import { Input } from "../../../components/ui/Input";
@@ -46,12 +46,17 @@ export function CreateActivityModal({
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [location, setLocation] = useState("");
+  const [locationUrl, setLocationUrl] = useState("");
   const [activityDate, setActivityDate] = useState(tripStartDate || "");
   const [startTime, setStartTime] = useState("09:00");
-  const [endTime, setEndTime] = useState("10:30");
+  const [endTime, setEndTime] = useState("10:00");
   const [selectedIcon, setSelectedIcon] = useState("map-pin");
   const [selectedColor, setSelectedColor] = useState("#FFB3C6");
   const [formError, setFormError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (tripStartDate) setActivityDate(tripStartDate);
+  }, [tripStartDate]);
 
   if (!isOpen) return null;
 
@@ -59,26 +64,25 @@ export function CreateActivityModal({
     e.preventDefault();
     setFormError(null);
 
-    if (!title.trim()) {
-      setFormError("Judul kegiatan wajib diisi.");
-      return;
-    }
-
-    if (!activityDate) {
-      setFormError("Tanggal kegiatan wajib diisi.");
-      return;
-    }
-
     if (endTime === startTime) {
       setFormError("Jam selesai tidak boleh sama dengan jam mulai.");
       return;
     }
+
+    const GOOGLE_MAPS_REGEX = /^https?:\/\/(www\.)?(maps\.app\.goo\.gl|goo\.gl\/maps|google\.[a-z.]+\/maps|maps\.google\.[a-z.]+)\/.+/i;
+    if (locationUrl.trim() && !GOOGLE_MAPS_REGEX.test(locationUrl.trim())) {
+      setFormError("Link harus berupa URL Google Maps yang valid (contoh: https://maps.app.goo.gl/P8W6P9pvmctQ18d66)");
+      return;
+    }
+
+    const finalLocationUrl = locationUrl.trim() || undefined;
 
     try {
       await onSubmit({
         title,
         description: description || undefined,
         location: location || undefined,
+        location_url: finalLocationUrl,
         activity_date: activityDate,
         start_time: startTime,
         end_time: endTime,
@@ -90,9 +94,14 @@ export function CreateActivityModal({
       setTitle("");
       setDescription("");
       setLocation("");
+      setLocationUrl("");
+      setStartTime("09:00");
+      setEndTime("10:00");
+      setSelectedIcon("map-pin");
+      setSelectedColor("#FFB3C6");
       onClose();
     } catch (err: any) {
-      setFormError(err.response?.data?.message || "Gagal menyimpan kegiatan.");
+      setFormError(err.response?.data?.message || "Gagal membuat kegiatan.");
     }
   };
 
@@ -198,12 +207,40 @@ export function CreateActivityModal({
               </div>
 
               <Input
-                label="Lokasi (Opsional)"
-                placeholder="misal: Pantai Jimbaran, Bali"
+                label="Nama Lokasi (Opsional)"
+                placeholder="misal: Universitas Brawijaya"
                 value={location}
                 onChange={(e) => setLocation(e.target.value)}
                 roughSeed={66}
               />
+
+              <div className="flex flex-col gap-1">
+                <label className="text-xs font-bold uppercase text-[var(--color-ink)]">
+                  Link Google Maps (Opsional)
+                </label>
+                <div className="flex items-center gap-2">
+                  <div className="flex-1">
+                    <Input
+                      placeholder="https://maps.app.goo.gl/P8W6P9pvmctQ18d66"
+                      value={locationUrl}
+                      onChange={(e) => setLocationUrl(e.target.value)}
+                      roughSeed={67}
+                    />
+                  </div>
+                  {locationUrl.trim() && /^https?:\/\/(www\.)?(maps\.app\.goo\.gl|goo\.gl\/maps|google\.[a-z.]+\/maps|maps\.google\.[a-z.]+)\/.+/i.test(locationUrl.trim()) && (
+                    <a
+                      href={locationUrl.trim()}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="px-3 py-2.5 bg-[var(--color-yellow)] hover:bg-[var(--color-yellow)]/80 text-[var(--color-ink)] text-xs font-bold rounded-xl border-2 border-[var(--color-ink)] transition-colors flex items-center gap-1 shrink-0 mt-1 cursor-pointer"
+                      title="Tes Buka Link Google Maps"
+                    >
+                      <MapPin className="w-4 h-4" />
+                      <span className="hidden sm:inline">Buka Link</span>
+                    </a>
+                  )}
+                </div>
+              </div>
 
               <Input
                 label="Deskripsi / Catatan (Maks. 25 Karakter)"

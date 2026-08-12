@@ -58,6 +58,7 @@ export function EditActivityModal({
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [location, setLocation] = useState("");
+  const [locationUrl, setLocationUrl] = useState("");
   const [activityDate, setActivityDate] = useState("");
   const [startTime, setStartTime] = useState("09:00");
   const [endTime, setEndTime] = useState("10:30");
@@ -70,6 +71,7 @@ export function EditActivityModal({
       setTitle(activity.title || "");
       setDescription(activity.description || "");
       setLocation(activity.location || "");
+      setLocationUrl(activity.location_url || "");
       setActivityDate(activity.activity_date || tripStartDate || "");
       setStartTime(activity.start_time || "09:00");
       setEndTime(activity.end_time || "10:30");
@@ -100,11 +102,20 @@ export function EditActivityModal({
       return;
     }
 
+    const GOOGLE_MAPS_REGEX = /^https?:\/\/(www\.)?(maps\.app\.goo\.gl|goo\.gl\/maps|google\.[a-z.]+\/maps|maps\.google\.[a-z.]+)\/.+/i;
+    if (locationUrl.trim() && !GOOGLE_MAPS_REGEX.test(locationUrl.trim())) {
+      setFormError("Link harus berupa URL Google Maps yang valid (contoh: https://maps.app.goo.gl/P8W6P9pvmctQ18d66)");
+      return;
+    }
+
+    const finalLocationUrl = locationUrl.trim() || undefined;
+
     try {
       await onSubmit(activity.id, {
         title,
         description: description || undefined,
         location: location || undefined,
+        location_url: finalLocationUrl,
         activity_date: activityDate,
         start_time: startTime,
         end_time: endTime,
@@ -114,7 +125,7 @@ export function EditActivityModal({
 
       onClose();
     } catch (err: any) {
-      setFormError(err.response?.data?.message || "Gagal memperbarui kegiatan.");
+      setFormError(err.response?.data?.message || "Gagal menyimpan kegiatan.");
     }
   };
 
@@ -221,12 +232,40 @@ export function EditActivityModal({
               </div>
 
               <Input
-                label="Lokasi (Opsional)"
-                placeholder="misal: Pantai Jimbaran, Bali"
+                label="Nama Lokasi (Opsional)"
+                placeholder="misal: Universitas Brawijaya"
                 value={location}
                 onChange={(e) => setLocation(e.target.value)}
                 roughSeed={90}
               />
+
+              <div className="flex flex-col gap-1">
+                <label className="text-xs font-bold uppercase text-[var(--color-ink)]">
+                  Link Google Maps (Opsional)
+                </label>
+                <div className="flex items-center gap-2">
+                  <div className="flex-1">
+                    <Input
+                      placeholder="https://maps.app.goo.gl/P8W6P9pvmctQ18d66"
+                      value={locationUrl}
+                      onChange={(e) => setLocationUrl(e.target.value)}
+                      roughSeed={91}
+                    />
+                  </div>
+                  {locationUrl.trim() && /^https?:\/\/(www\.)?(maps\.app\.goo\.gl|goo\.gl\/maps|google\.[a-z.]+\/maps|maps\.google\.[a-z.]+)\/.+/i.test(locationUrl.trim()) && (
+                    <a
+                      href={locationUrl.trim()}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="px-3 py-2.5 bg-[var(--color-yellow)] hover:bg-[var(--color-yellow)]/80 text-[var(--color-ink)] text-xs font-bold rounded-xl border-2 border-[var(--color-ink)] transition-colors flex items-center gap-1 shrink-0 mt-1 cursor-pointer"
+                      title="Tes Buka Link Google Maps"
+                    >
+                      <MapPin className="w-4 h-4" />
+                      <span className="hidden sm:inline">Buka Link</span>
+                    </a>
+                  )}
+                </div>
+              </div>
 
               <Input
                 label="Deskripsi / Catatan (Maks. 25 Karakter)"

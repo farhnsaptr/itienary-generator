@@ -16,6 +16,7 @@ export interface Activity {
   title: string;
   description: string | null;
   location: string | null;
+  location_url: string | null;
   activity_date: string;
   start_time: string;
   end_time: string;
@@ -28,17 +29,26 @@ export interface Activity {
   activity_photos?: ActivityPhotoItem[];
 }
 
+const googleMapsRegex = /^https?:\/\/(www\.)?(maps\.app\.goo\.gl|goo\.gl\/maps|google\.[a-z.]+\/maps|maps\.google\.[a-z.]+)\/.+/i;
+
 export const createActivitySchema = z.object({
   title: z.string().min(1, "Judul kegiatan wajib diisi").max(20, "Maksimal 20 karakter"),
   description: z.string().max(25, "Maksimal 25 karakter").optional(),
   location: z.string().optional(),
+  location_url: z
+    .string()
+    .refine(
+      (val) => !val || val.trim() === "" || googleMapsRegex.test(val.trim()),
+      "Link harus berupa URL Google Maps yang valid (contoh: https://maps.app.goo.gl/P8W6P9pvmctQ18d66)"
+    )
+    .optional(),
   activity_date: z.string().min(1, "Tanggal kegiatan wajib diisi"),
   start_time: z.string().min(1, "Jam mulai wajib diisi"),
   end_time: z.string().min(1, "Jam selesai wajib diisi"),
   icon: z.string().default("map-pin"),
   color: z.string().default("#f97316"),
-}).refine((data) => data.end_time > data.start_time, {
-  message: "Jam selesai harus lebih besar dari jam mulai",
+}).refine((data) => data.end_time !== data.start_time, {
+  message: "Jam selesai tidak boleh sama dengan jam mulai",
   path: ["end_time"],
 });
 

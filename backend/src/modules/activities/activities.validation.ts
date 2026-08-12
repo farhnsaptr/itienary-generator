@@ -2,6 +2,15 @@ import { z } from "zod";
 
 const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
 const timeRegex = /^([01]\d|2[0-3]):[0-5]\d(:[0-5]\d)?$/;
+const googleMapsRegex = /^https?:\/\/(www\.)?(maps\.app\.goo\.gl|goo\.gl\/maps|google\.[a-z.]+\/maps|maps\.google\.[a-z.]+)\/.+/i;
+
+const locationUrlValidation = z
+  .string()
+  .refine(
+    (val) => !val || val.trim() === "" || googleMapsRegex.test(val.trim()),
+    "Link harus berupa URL Google Maps yang valid (contoh: https://maps.app.goo.gl/P8W6P9pvmctQ18d66)"
+  )
+  .optional();
 
 export const createActivitySchema = z.object({
   params: z.object({
@@ -12,6 +21,7 @@ export const createActivitySchema = z.object({
       title: z.string().min(1, "Judul kegiatan wajib diisi").max(20, "Judul maksimal 20 karakter"),
       description: z.string().max(25, "Deskripsi maksimal 25 karakter").optional(),
       location: z.string().max(255).optional(),
+      location_url: locationUrlValidation,
       activity_date: z.string().regex(dateRegex, "Format activity_date harus YYYY-MM-DD"),
       start_time: z.string().regex(timeRegex, "Format start_time harus HH:mm atau HH:mm:ss"),
       end_time: z.string().regex(timeRegex, "Format end_time harus HH:mm atau HH:mm:ss"),
@@ -33,6 +43,7 @@ export const updateActivitySchema = z.object({
     title: z.string().min(1).max(20).optional(),
     description: z.string().max(25).optional(),
     location: z.string().max(255).optional(),
+    location_url: locationUrlValidation,
     activity_date: z.string().regex(dateRegex).optional(),
     start_time: z.string().regex(timeRegex).optional(),
     end_time: z.string().regex(timeRegex).optional(),

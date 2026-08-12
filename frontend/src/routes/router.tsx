@@ -5,6 +5,11 @@ import { LoginPage } from "../pages/LoginPage";
 import { DashboardPage } from "../pages/DashboardPage";
 import { AdminUsersPage } from "../pages/AdminUsersPage";
 import { TripDetailPage } from "../pages/TripDetailPage";
+import { NotFoundPage } from "../pages/NotFoundPage";
+import { ForbiddenPage } from "../pages/ForbiddenPage";
+import { OfflinePage } from "../pages/OfflinePage";
+import { OfflineBanner } from "../components/common/OfflineBanner";
+import { InstallPWAPrompt } from "../components/common/InstallPWAPrompt";
 import { NavigationIcon as Compass } from "react-doodle-icons";
 
 function LoadingScreen() {
@@ -29,7 +34,13 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
     return <Navigate to="/login" replace />;
   }
 
-  return <>{children}</>;
+  return (
+    <>
+      <OfflineBanner />
+      <InstallPWAPrompt />
+      {children}
+    </>
+  );
 }
 
 function AdminRoute({ children }: { children: React.ReactNode }) {
@@ -44,10 +55,16 @@ function AdminRoute({ children }: { children: React.ReactNode }) {
   }
 
   if (user?.role !== "admin") {
-    return <Navigate to="/dashboard" replace />;
+    return <ForbiddenPage />;
   }
 
-  return <>{children}</>;
+  return (
+    <>
+      <OfflineBanner />
+      <InstallPWAPrompt />
+      {children}
+    </>
+  );
 }
 
 function PublicRoute({ children }: { children: React.ReactNode }) {
@@ -61,7 +78,13 @@ function PublicRoute({ children }: { children: React.ReactNode }) {
     return <Navigate to="/dashboard" replace />;
   }
 
-  return <>{children}</>;
+  return (
+    <>
+      <OfflineBanner />
+      <InstallPWAPrompt />
+      {children}
+    </>
+  );
 }
 
 export const router = createBrowserRouter([
@@ -102,7 +125,15 @@ export const router = createBrowserRouter([
     ),
   },
   {
+    path: "/403",
+    element: <ForbiddenPage />,
+  },
+  {
+    path: "/offline",
+    element: <OfflinePage />,
+  },
+  {
     path: "*",
-    element: <Navigate to="/dashboard" replace />,
+    element: <NotFoundPage />,
   },
 ]);

@@ -81,6 +81,7 @@ export class ActivitiesService {
         title: input.title,
         description: input.description || null,
         location: input.location || null,
+        location_url: input.location_url || null,
         activity_date: input.activity_date,
         start_time: input.start_time,
         end_time: input.end_time,

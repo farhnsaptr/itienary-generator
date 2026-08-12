@@ -4,6 +4,7 @@ export interface Activity {
   title: string;
   description: string | null;
   location: string | null;
+  location_url: string | null;
   activity_date: string;
   start_time: string;
   end_time: string;
@@ -24,6 +25,7 @@ export interface CreateActivityInput {
   title: string;
   description?: string;
   location?: string;
+  location_url?: string;
   activity_date: string;
   start_time: string;
   end_time: string;
@@ -36,6 +38,7 @@ export interface UpdateActivityInput {
   title?: string;
   description?: string;
   location?: string;
+  location_url?: string;
   activity_date?: string;
   start_time?: string;
   end_time?: string;

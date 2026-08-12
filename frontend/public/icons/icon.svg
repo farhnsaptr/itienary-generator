@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <!-- Background Cream Paper -->
+  <rect width="512" height="512" rx="128" fill="#FFFDF7" />
+  <rect width="472" height="472" x="20" y="20" rx="108" fill="none" stroke="#3A3238" stroke-width="12" stroke-dasharray="16 12" />
+  
+  <!-- Outer Pastel Circle -->
+  <circle cx="256" cy="256" r="180" fill="#FFB3C6" stroke="#3A3238" stroke-width="14" />
+  <circle cx="256" cy="256" r="140" fill="#A2D2FF" stroke="#3A3238" stroke-width="10" />
+
+  <!-- Compass Star Needle -->
+  <polygon points="256,100 290,220 412,256 290,292 256,412 222,292 100,256 222,220" fill="#FFD97D" stroke="#3A3238" stroke-width="10" stroke-linejoin="round" />
+  <polygon points="256,100 256,256 412,256 256,292 256,412 222,256 100,256 256,220" fill="#F97316" opacity="0.8" />
+  
+  <!-- Center Core -->
+  <circle cx="256" cy="256" r="32" fill="#FFFDF7" stroke="#3A3238" stroke-width="10" />
+  <circle cx="256" cy="256" r="12" fill="#3A3238" />
+</svg>
